@@ -1,0 +1,3 @@
+*.fst.config.json
+artifact
+*.smt2
