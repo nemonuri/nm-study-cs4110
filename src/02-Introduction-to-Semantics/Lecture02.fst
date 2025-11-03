@@ -4,7 +4,7 @@ module Lecture02
 1 Arithmetic Expressions
 
 A program in this language is an expression;
-**executing a program** means **evaluating the expression to an integer**. 
+executing a program means evaluating the expression to an integer. 
 To describe the syntactic structure of this language we will use variables that range over the following domains:
 
 𝑥, 𝑦, 𝑧 ∈ Var
@@ -43,3 +43,13 @@ For instance, the AST of expression 2 * (foo + 1) is:
 *)
 
 let example_expression1 = Mul (Int 2, Add (Var "foo", Int 1))
+
+(*
+2 Operational semantics
+
+An *operational semantics* describes how a program executes on an abstract machine.
+A *small-step* operational semantics describes how such an execution proceeds in terms of successive reductions
+—here, of an expression—until we reach a value that represents the result of the computation. 
+The state of the abstract machine is often referred to as a configuration.
+
+*)
