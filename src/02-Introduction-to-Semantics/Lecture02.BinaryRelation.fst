@@ -26,18 +26,32 @@ let (∈) = is_member_of
 
 let is_subset_of (#a_t:eqtype) (l:set_t a_t) (r:set_t a_t) : prop = forall x. (x ∈ l) ==> (x ∈ r)
 let (⊆) = is_subset_of
-   
+
+let is_in_product_set 
+  (#a_t:eqtype) (#b_t:eqtype) (set_a:set_t a_t) (set_b:set_t b_t)
+  (x:(a_t & b_t))
+  : prop =
+  (fst x ∈ set_a) /\ (snd x ∈ set_b)
+
 let product (#a_t:eqtype) (#b_t:eqtype) (set_a:set_t a_t) (set_b:set_t b_t)
   : set_t (a_t & b_t) =
-  let indicate (x:(a_t & b_t)) : prop = 
-    (fst x ∈ set_a) /\ (snd x ∈ set_b)
-  in
-  F.on (a_t & b_t) indicate
+  F.on (a_t & b_t) (is_in_product_set set_a set_b)
 (* Note: A `×` B *)
 let × = product
 
+let is_product_set 
+  (#a_t:eqtype) (#b_t:eqtype) (set_a:set_t a_t) (set_b:set_t b_t)
+  (x:set_t (a_t & b_t))
+  : prop =
+  x == (set_a `×` set_b)
+
+type product_set_t (#a_t:eqtype) (#b_t:eqtype) (set_a:set_t a_t) (set_b:set_t b_t) =
+  x:(set_t (a_t & b_t)){is_product_set set_a set_b x}
+
 let to_tset #a_t (set:set_t a_t) : FStar.TSet.set a_t = FStar.TSet.intension set
 let to_predicate #a_t (set:set_t a_t) : Tot (a_t -> prop) = set
+let to_type #a_t (set:set_t a_t) : eqtype = x:a_t{x ∈ set}
+
 //---|
 
 let is_binary_relation
@@ -50,6 +64,12 @@ let is_binary_relation
 
 type binary_relation_t #a_t #b_t (set_a:set_t a_t) (set_b:set_t b_t) =
   x:(set_t (a_t & b_t)){is_binary_relation set_a set_b x}
+
+let binary_relation_to_predicate 
+  (#a_t:eqtype) (#b_t:eqtype) (#set_a:set_t a_t) (#set_b:set_t b_t)
+  (x:binary_relation_t set_a set_b)
+  : a_t -> b_t -> prop =
+  fun a b -> (a, b) ∈ x
 
 let get_domain 
   #a_t #b_t (#set_a:set_t a_t) (#set_b:set_t b_t)
@@ -85,3 +105,37 @@ let composition
   in
   F.on (a_t & c_t) indicate
 
+(* A (total) function f is a binary relation f ⊆ A × B with the property
+   that every a ∈ A is related to exactly one b ∈ B *)
+module U = Nemonuri.Unique
+
+let is_total_function 
+  #a_t #b_t 
+  (#set_a:set_t a_t) (#set_b:set_t b_t)
+  (x:binary_relation_t set_a set_b)
+  : prop =
+  forall (a:a_t). (U.is_singleton_predicate ((binary_relation_to_predicate x) a))
+  //product_to_predicate
+  //let is_member_of' (a':a_t) (b':b_t) : prop =
+  //  (a', b') ∈ x
+  //in
+  //forall (a:a_t). (U.is_singleton_predicate (is_member_of' a))
+(* Note: ∀∃∀ 라... *)
+
+type total_function_t 
+  #a_t #b_t (set_a:set_t a_t) (set_b:set_t b_t) =
+  x:(binary_relation_t set_a set_b){is_total_function x}
+
+
+let apply_total 
+  #a_t #b_t (#set_a:set_t a_t) (#set_b:set_t b_t)
+  (total_function:total_function_t set_a set_b)
+  (a:a_t)
+  : GTot b_t =
+  U.get_unique_element ((binary_relation_to_predicate total_function) a)
+
+let to_arrow
+  #a_t #b_t (#set_a:set_t a_t) (#set_b:set_t b_t)
+  (total_function:total_function_t set_a set_b)
+  : a_t -> GTot b_t =
+  apply_total total_function
