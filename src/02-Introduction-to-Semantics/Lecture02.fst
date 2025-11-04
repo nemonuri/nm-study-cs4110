@@ -27,12 +27,12 @@ Exp is the domain of expressions, which we specify using a BNF (Backus–Naur Fo
 The syntactic structure of expressions in this language can be compactly expressed in OCaml using datatypes:
 *)
 
-type exp =
+type exp_t =
   | Var of string
   | Int of int
-  | Add of exp * exp
-  | Mul of exp * exp
-  | Assgn of string * exp * exp
+  | Add of exp_t * exp_t
+  | Mul of exp_t * exp_t
+  | Assgn of string * exp_t * exp_t
 
 (*
 
@@ -44,12 +44,27 @@ For instance, the AST of expression 2 * (foo + 1) is:
 
 let example_expression1 = Mul (Int 2, Add (Var "foo", Int 1))
 
-(*
-2 Operational semantics
+(* The state of the abstract machine is often referred to as a *configuration*.
 
-An *operational semantics* describes how a program executes on an abstract machine.
-A *small-step* operational semantics describes how such an execution proceeds in terms of successive reductions
-—here, of an expression—until we reach a value that represents the result of the computation. 
-The state of the abstract machine is often referred to as a configuration.
+   For our language a configuration must include two pieces of information:
 
+   - a *store* (also known as environment or state), which maps variables to integer values. 
+     During program execution, we will refer to the store to determine the values associated with variables, 
+     and also update the store to reflect assignment of new values to variables,
+   - the *expression* to evaluate. 
 *)
+
+type store_t = (exp_var:exp_t{Var? exp_var}) -> option (exp_int:exp_t{Int? exp_int})
+type config_t = (store_t & exp_t)
+
+(* The small‑step operational semantics itself is a relation on configurations—i.e., a subset of Config × Config *)
+type small_step_t = config_t -> config_t -> bool
+
+open FStar.Tactics.Typeclasses
+
+class config_premise = {
+  small_step: small_step_t
+}
+
+let ( !> ) {| premise: config_premise |} (pre:config_t) (post:config_t) = premise.small_step pre post
+
