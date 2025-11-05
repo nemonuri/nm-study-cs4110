@@ -27,7 +27,7 @@ let (∈) = is_member_of
 let is_subset_of (#a_t:eqtype) (l:set_t a_t) (r:set_t a_t) : prop = forall x. (x ∈ l) ==> (x ∈ r)
 let (⊆) = is_subset_of
 
-let is_in_product_set 
+let is_member_of_product_set 
   (#a_t:eqtype) (#b_t:eqtype) (set_a:set_t a_t) (set_b:set_t b_t)
   (x:(a_t & b_t))
   : prop =
@@ -35,7 +35,7 @@ let is_in_product_set
 
 let product (#a_t:eqtype) (#b_t:eqtype) (set_a:set_t a_t) (set_b:set_t b_t)
   : set_t (a_t & b_t) =
-  F.on (a_t & b_t) (is_in_product_set set_a set_b)
+  F.on (a_t & b_t) (is_member_of_product_set set_a set_b)
 (* Note: A `×` B *)
 let × = product
 
@@ -65,12 +65,6 @@ let is_binary_relation
 type binary_relation_t #a_t #b_t (set_a:set_t a_t) (set_b:set_t b_t) =
   x:(set_t (a_t & b_t)){is_binary_relation set_a set_b x}
 
-let binary_relation_to_predicate 
-  (#a_t:eqtype) (#b_t:eqtype) (#set_a:set_t a_t) (#set_b:set_t b_t)
-  (x:binary_relation_t set_a set_b)
-  : a_t -> b_t -> prop =
-  fun a b -> (a, b) ∈ x
-
 let get_domain 
   #a_t #b_t (#set_a:set_t a_t) (#set_b:set_t b_t)
   (binary_relation:binary_relation_t set_a set_b) =
@@ -81,6 +75,37 @@ let get_codomain
   (binary_relation:binary_relation_t set_a set_b) =
   set_b
 
+
+type binary_predicate_t (domain_t:eqtype) (codomain_t:eqtype) = domain_t -> codomain_t -> prop
+
+let binary_relation_to_binary_predicate 
+  (#a_t:eqtype) (#b_t:eqtype) (#set_a:set_t a_t) (#set_b:set_t b_t)
+  (x:binary_relation_t set_a set_b)
+  : binary_predicate_t a_t b_t =
+  fun a b -> (a, b) ∈ x
+
+let is_member_of_domain #d_t #c_t (binary_predicate:binary_predicate_t d_t c_t) (d:d_t)
+  : prop =
+  exists (c:c_t). (binary_predicate d c)
+
+let is_member_of_codomain #d_t #c_t (binary_predicate:binary_predicate_t d_t c_t) (c:c_t)
+  : prop =
+  exists (d:d_t). (binary_predicate d c)
+
+let is_example_of_binary_predicate
+  #d_t #c_t (binary_predicate:binary_predicate_t d_t c_t) (x:(d_t & c_t))
+  : prop =
+  binary_predicate (fst x) (snd x)
+
+let binary_predicate_to_binary_relation
+  (#a_t:eqtype) (#b_t:eqtype) (binary_predicate:a_t -> b_t -> prop)
+  : binary_relation_t
+    (F.on a_t (is_member_of_domain binary_predicate)) 
+    (F.on b_t (is_member_of_codomain binary_predicate))
+  =
+  //let indicate' (br:(a_t & b_t)) : prop = binary_predicate (fst br) (snd br) in
+  F.on (a_t & b_t) (is_example_of_binary_predicate binary_predicate)
+  
 
 (* Some Important Relations *)
 
@@ -114,7 +139,7 @@ let is_total_function
   (#set_a:set_t a_t) (#set_b:set_t b_t)
   (x:binary_relation_t set_a set_b)
   : prop =
-  forall (a:a_t). (U.is_singleton_predicate ((binary_relation_to_predicate x) a))
+  forall (a:a_t). (U.is_singleton_predicate ((binary_relation_to_binary_predicate x) a))
   //product_to_predicate
   //let is_member_of' (a':a_t) (b':b_t) : prop =
   //  (a', b') ∈ x
@@ -132,7 +157,7 @@ let apply_total
   (total_function:total_function_t set_a set_b)
   (a:a_t)
   : GTot b_t =
-  U.get_unique_element ((binary_relation_to_predicate total_function) a)
+  U.get_unique_element ((binary_relation_to_binary_predicate total_function) a)
 
 let to_arrow
   #a_t #b_t (#set_a:set_t a_t) (#set_b:set_t b_t)
