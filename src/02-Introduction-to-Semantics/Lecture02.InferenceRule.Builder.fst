@@ -1,6 +1,5 @@
-module Lecture02.InferenceRule.Constructor
-module C = Lecture02.InferenceRule.Class
-module Label = Nemonuri.Label
+module Lecture02.InferenceRule.Builder
+module Ir = Lecture02.InferenceRule
 
 noeq
 type meta_proposition_schema_t (model_t:Type) = {
@@ -20,12 +19,12 @@ type t (model_t:Type) =
 | AddPremise: (premise:meta_proposition_schema_t model_t) -> (t model_t) -> t model_t
 
 
-let rec to_class #model_t (raw:t model_t) (label:Label.t)
-  : Tot (C.t model_t label) (decreases raw) =
-  match raw with
+let rec build #model_t (builder:t model_t)
+  : Tot (Ir.t model_t) (decreases builder) =
+  match builder with
   | ConclusionOnly c -> {premises = []; conclusion = (to_prop c)}
-  | AddPremise p pre_raw -> 
-  let pre_class = to_class pre_raw label in
+  | AddPremise p pre_builder -> 
+  let pre_class = build pre_builder in
   {
     premises = (to_prop p)::(pre_class.premises);
     conclusion = pre_class.conclusion
