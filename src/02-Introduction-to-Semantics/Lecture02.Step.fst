@@ -31,7 +31,7 @@ let lemma_small_step
 
 module Rtc = FStar.ReflexiveTransitiveClosure
 
-type indexless_multi_step_t #state_t (binrel:binrel_t state_t) =
+type indexless_multi_step_t #state_t (binrel:binrel_t state_t) : eqtype =
 {
   first: state_t;
   last: (x:state_t{is_model_of_multi_step binrel first x});

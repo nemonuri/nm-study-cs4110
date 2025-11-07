@@ -68,3 +68,14 @@ class config_premise = {
 
 let ( !> ) {| premise: config_premise |} (pre:config_t) (post:config_t) = premise.small_step pre post
 
+(*
+type meta_exp_t =
+| Var
+*)
+
+noeq
+type rule_exp_t =
+| Select: (n:int) -> (x:string) -> rule_exp_t
+| SmallStep: (from:config_t) -> (to:config_t) -> rule_exp_t
+
+//type rule
