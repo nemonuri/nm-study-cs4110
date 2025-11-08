@@ -1,1 +1,3 @@
-https://www.cs.cornell.edu/courses/cs4110/2024sp/schedule.html
+- https://www.cs.cornell.edu/courses/cs4110/2024sp/schedule.html
+- https://www.cs.cornell.edu/courses/cs6110/2025sp/?schedule
+- https://www.cs.cornell.edu/courses/cs6110/2016sp/schedule.php
