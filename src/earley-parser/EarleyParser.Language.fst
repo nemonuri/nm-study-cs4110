@@ -1,3 +1,5 @@
+(* Reference: JAY EARLEY, An Efficient Context-Free Parsing Algorithm *)
+
 module EarleyParser.Language
 module O = FStar.OrdSet
 module T = FStar.Class.TotalOrder.Raw
@@ -22,8 +24,8 @@ noeq type config_t = {
 let is_terminal (config:config_t) (lower_symbol:config.lower_symbol_t) : bool =
   O.mem lower_symbol config.terminal_set
 
+let is_string (config:config_t) (lower_symbols:list config.lower_symbol_t) : bool =
+  L.for_all (is_terminal config) lower_symbols
 
 
 
-//let is_string (config:config_t) (l:list config.terminal_symbol_t) : bool =
-//  L.for_all 
