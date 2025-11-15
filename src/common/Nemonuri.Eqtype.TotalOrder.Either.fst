@@ -156,7 +156,7 @@ let lemma_to_either_comparer
   : Lemma (is_eqtype_total_order (to_either_comparer total_order_l total_order_g)) =
   let open FStar.Classical in
   let comparer = to_either_comparer total_order_l total_order_g in
-  let p_goal1: prop = (forall x y. are_equality_and_identity_same_at comparer x y) in
+  let p_goal1: prop = (are_equality_and_identity_same comparer) in
   forall_intro_2 (lemma_to_either_comparer_equality total_order_l total_order_g);
   assert (p_goal1);
 
