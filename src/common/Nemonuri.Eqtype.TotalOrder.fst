@@ -24,6 +24,23 @@ let lemma_are_equality_and_identity_same_at
 let are_equality_and_identity_same #a_t (comparer:comparer_t a_t) : prop =
   forall (x y: a_t). (are_equality_and_identity_same_at comparer x y)
 
+(* Note: 모든 '동치'는 반드시 symmetry 성질을 만족해야 한다! *)
+let lemma_are_equality_and_identity_same_at_symmetry
+  #a_t (comparer:comparer_t a_t) (x:a_t) (y:a_t)
+  : Lemma (requires 
+            (are_equality_and_identity_same comparer) // /\
+            //(are_equality_and_identity_same_at comparer x y)
+          )
+          (ensures 
+            //(are_equality_and_identity_same_at comparer y x) /\
+            (* Show [is_equal] is symmetric *) 
+            ((is_equal comparer x y) <==> (is_equal comparer y x)))
+  =
+  assert (are_equality_and_identity_same_at comparer x y);
+  assert (are_equality_and_identity_same_at comparer y x)
+
+
+
 let is_anti_symmetry_at 
   #a_t (comparer:comparer_t a_t) (a1:a_t) (a2:a_t) : prop =
   let is_le = is_less_or_equal comparer in
@@ -43,14 +60,54 @@ let lemma_anti_symmetry_less_or_equal #a_t (comparer:comparer_t a_t) (x:a_t) (y:
   =
   assert (is_anti_symmetry_at comparer x y <==> is_anti_symmetry_at comparer y x)
 
+(*
+let lemma_anti_symmetry_equal (comparer:comparer_t a_t) (x:a_t) (y:a_t)
+  : Lemma (requires (is_anti_symmetry comparer) /\ (are_equality_and_identity_same comparer) /\
+                    (is_equal comparer x y))
+          (ensures (is_less_or_equal comparer x y) /\ (is_less_or_equal comparer y x))
+  =
+*)
+
+(*
+let lemma_anti_symmetry_equal #a_t (comparer:comparer_t a_t) (x:a_t) (y:a_t)
+  : Lemma (requires (is_anti_symmetry comparer) /\ (is_equal comparer x y))
+          (ensures (is_less_or_equal comparer x y) /\ (is_less_or_equal comparer y x))
+  =
+  let p1: prop = (is_equal comparer x y) in
+  let p1_1: prop = (is_less_or_equal comparer x y) in
+  let p2: prop = (is_equal comparer y x) in
+  let p2_1: prop = (is_less_or_equal comparer y x) in
+  assert (p1 ==> p1_1); assert (p1); assert (p1_1);
+  assert (p2 ==> p1_1)
+*)
 
 let is_transive_at 
   #a_t (comparer:comparer_t a_t) (a1:a_t) (a2:a_t) (a3:a_t) : prop =
   let is_le = is_less_or_equal comparer in
   is_le a1 a2 /\ is_le a2 a3 ==> is_le a1 a3
 
+
+            
+  //let lemma_aux' (x': a_t) (y': a_t)
+  //  : Lemma (requires (is_transive_at comparer x' y' x') /\ (is_le x' y') /\ (is_le y' x')) 
+  //          (ensures is_le x' x')
+  //  = ()
+  //in
+  //lemma_aux' x y; assert (is_le x x);
+  //lemma_aux' y x; assert (is_le y y);
+  //()
+
+
 let is_transive #a_t (comparer:comparer_t a_t) : prop =
   forall a1 a2 a3. is_transive_at comparer a1 a2 a3
+
+(*
+let lemma_is_equal_transive #a_t (comparer:comparer_t a_t) (x:a_t) (y:a_t) (z:a_t)
+  : Lemma (requires
+            (is_anti_symmetry comparer) /\ (is_transive comparer) 
+            /\ (is_equal comparer x z))
+          (ensures )
+*)
 
 let is_total_at
   #a_t (comparer:comparer_t a_t) (a1:a_t) (a2:a_t) : prop =
