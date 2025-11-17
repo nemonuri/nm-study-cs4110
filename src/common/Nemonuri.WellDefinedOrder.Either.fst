@@ -4,7 +4,6 @@ open FStar.Order
 open Nemonuri.WellDefinedOrder
 module Td = Nemonuri.Transitive.Decidable
 module Tud = Nemonuri.Transitive
-module Swo = Nemonuri.WellDefined.StrictWeakOrder
 
 let to_either_comparer
   (#lesser_t: eqtype)
@@ -36,7 +35,7 @@ let lemma_to_either_comparer
   let p_goal3 = (Td.is_reflexive is_equal) in
   let p_goal4 = (Td.is_transitive is_less) in
   let p_goal5 = (Td.is_irreflexive is_less) in
-  let p_goal6 = (Td.is_transitive (Swo.to_incomparable is_less)) in
+  let p_goal6 = (is_lt_incomparable_eq comparer) in
 
   let lemma_goal1 x y z
     : Lemma (requires (is_equal x y) /\ (is_equal y z)) (ensures (is_equal x z)) =
@@ -77,11 +76,25 @@ let lemma_to_either_comparer
     | (Inr xv, Inr yv, Inr zv) -> assert (Td.is_transitive_at (to_binrel wdo_g.comparer Lt) xv yv zv)
     | (Inl _, _, Inr _) -> ()
   in
-  assume (p_goal4);
+  lemma_goal4 |> move_requires_3 |> forall_intro_3;
+  assert (p_goal4);
 
   assert (p_goal5);
 
-  assume (p_goal6)
+  let lemma_goal6 x y : Lemma (is_lt_incomparable_eq_at comparer x y) =
+    let pl: prop = is_lt_incomparable_at comparer x y in
+    let pr: prop = is_equal x y in
+    let lemma_l_to_r' () : Lemma (requires pl) (ensures pr) =
+      admit ()
+    in
+    let lemma_r_to_l' () : Lemma (requires pr) (ensures pl) =
+      admit ()
+    in
+    move_requires lemma_l_to_r' ();
+    move_requires lemma_r_to_l' ()
+  in
+  lemma_goal6 |> forall_intro_2;
+  assert (p_goal6)
 
 let to_either
   (#lesser_t: eqtype)

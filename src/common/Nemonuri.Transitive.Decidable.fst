@@ -111,6 +111,24 @@ let lemma_is_asymmetric #a_t (binrel:binrel_t a_t)
   FStar.Classical.forall_intro_2 (lemma_is_asymmetric_at binrel)
 //---|
 
+//--- total ---
+let is_total_at #a_t (binrel:binrel_t a_t) (x y: a_t) : bool =
+          (x = y) || ((binrel x y) || (binrel y x))
+  (* not (x <> y) *)
+
+let lemma_is_total_at #a_t (binrel:binrel_t a_t) (x y: a_t)
+  : Lemma ((is_total_at binrel x y) <==> (Un.is_total_at (to_undecidable binrel) x y))
+  = ()
+
+let is_total #a_t (binrel:binrel_t a_t) : prop = 
+  forall x y. is_total_at binrel x y
+
+let lemma_is_total #a_t (binrel:binrel_t a_t)
+  : Lemma ((is_total binrel) <==> (Un.is_total (to_undecidable binrel)))
+  =
+  FStar.Classical.forall_intro_2 (lemma_is_total_at binrel)
+//---|
+
 let lemma_transitivity_irreflexivity_imply_asymmetry #a_t (binrel: binrel_t a_t)
   : Lemma (requires is_transitive binrel /\ is_irreflexive binrel)
           (ensures is_asymmetric binrel)

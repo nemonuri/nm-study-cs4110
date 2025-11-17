@@ -149,6 +149,18 @@ let lemma_unfold_is_asymmetric #a_t (binrel:binrel_t a_t)
   norm_spec [delta_only [`%is_asymmetric; `%is_asymmetric_at]] (is_asymmetric binrel)
 //---|
 
+//--- total ---
+let is_total_at #a_t (binrel: binrel_t a_t) (x y:a_t) : prop =
+  (x =!= y) ==> ((binrel x y) \/ (binrel y x))
+
+let is_total #a_t (binrel: binrel_t a_t) : prop =
+  forall x y. is_total_at binrel x y
+
+let lemma_unfold_is_total #a_t (binrel:binrel_t a_t) 
+  : Lemma (norm [delta_only [`%is_total; `%is_total_at]] 
+                (is_total binrel) == (is_total binrel)) = 
+  norm_spec [delta_only [`%is_total; `%is_total_at]] (is_total binrel)
+//---|
 
 //--- irreflexivity (1) and transitivity (2) together imply asymmetry (3) ---
 (* Reference: https://en.wikipedia.org/wiki/Weak_ordering#Total_preorders *)
