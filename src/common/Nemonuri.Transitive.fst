@@ -2,14 +2,18 @@ module Nemonuri.Transitive
 
 (* Refernce: https://en.wikipedia.org/wiki/Transitive_relation *)
 
-type binrel_t (a_t:Type) = a_t -> a_t -> Type
+type binrel_t (a_t:Type) = a_t -> a_t -> prop
 
-//unfold
 let is_transitive_at #a_t (binrel:binrel_t a_t) (x y z:a_t) : prop =
   (binrel x y) /\ (binrel y z) ==> (binrel x z)
 
 let is_transitive #a_t (binrel:binrel_t a_t) : prop =
   forall x y z. is_transitive_at binrel x y z
+
+(* Note: 아하...tactic 를 직접 쓰지 않고도, 이렇게 unfold 할 수 있구나! *)
+let lemma_unfold_is_transitive #a_t (binrel:binrel_t a_t) 
+  : Lemma (norm [delta_only [`%is_transitive; `%is_transitive_at]] (is_transitive binrel) == (is_transitive binrel)) = 
+  norm_spec [delta_only [`%is_transitive; `%is_transitive_at]] (is_transitive binrel)
 
 (* The converse (inverse) of a transitive relation is always transitive *)
 let to_converse #a_t (binrel:binrel_t a_t) : binrel_t a_t =
@@ -19,12 +23,7 @@ let lemma_to_converse #a_t (binrel:binrel_t a_t)
   : Lemma (requires is_transitive binrel)
           (ensures binrel |> to_converse |> is_transitive)
   = 
-  let pr = is_transitive binrel in
-  let pq = binrel |> to_converse |> is_transitive in
-  let open FStar.Tactics.V2 in
-  assert (pr ==> pq) by (
-    norm [delta_only [`%is_transitive; `%is_transitive_at]]
-  ) (* Note: ...왜 이러니까 증명이 돼? 대체 왜? *)
+  lemma_unfold_is_transitive binrel
   
 (* The intersection of two transitive relations is always transitive *)
 let to_intersection #a_t (binrel1: binrel_t a_t) (binrel2: binrel_t a_t) 
@@ -35,17 +34,13 @@ let lemma_to_intersection #a_t (binrel1: binrel_t a_t) (binrel2: binrel_t a_t)
   : Lemma (requires is_transitive binrel1 /\ is_transitive binrel2)
           (ensures to_intersection binrel1 binrel2 |> is_transitive)
   =
-  let pr = is_transitive binrel1 /\ is_transitive binrel2 in
-  let pq = to_intersection binrel1 binrel2 |> is_transitive in
-  let open FStar.Tactics.V2 in
-  assert (pr ==> pq) by (
-    norm [delta_only [`%is_transitive; `%is_transitive_at]]
-  )
+  lemma_unfold_is_transitive binrel1;
+  lemma_unfold_is_transitive binrel2
 
 (* The union of two transitive relations need not be transitive *)
 let to_union #a_t (binrel1: binrel_t a_t) (binrel2: binrel_t a_t) 
   : binrel_t a_t =
-  fun x y -> (binrel1 x y) \/ (binrel2 y x)
+  fun x y -> (binrel1 x y) \/ (binrel2 x y)
 
 let lemma_to_union ()
   : Lemma (~(forall (a_t: Type) (binrel1: binrel_t a_t) (binrel2: binrel_t a_t).
@@ -62,10 +57,8 @@ let lemma_to_union ()
     : Lemma (requires is_transitive equal_to) (ensures False) =
     let p = (equal_to (1, 2) (1, 3)) /\ (equal_to (1, 3) (2, 3)) in
     let c = (equal_to (1, 2) (2, 3)) in
-    let open FStar.Tactics.V2 in
-    assert ((is_transitive equal_to) ==> p ==> c) by (
-      norm [delta_only [`%is_transitive; `%is_transitive_at]]
-    )
+    lemma_unfold_is_transitive equal_to;
+    assert (p ==> c)
   in
   move_requires lemma_equal_to_is_not_transitive' ();
   assert (~(is_transitive (to_union equal_to1 equal_to2)))
@@ -89,22 +82,76 @@ let lemma_to_complement ()
     : Lemma (requires is_transitive not_equal_to) (ensures False) =
     let p = (not_equal_to 1 2) /\ (not_equal_to 2 1) in
     let c = (not_equal_to 1 1) in
-    let open FStar.Tactics.V2 in
-    assert ((is_transitive not_equal_to) ==> p ==> c) by (
-      norm [delta_only [`%is_transitive; `%is_transitive_at]]
-    )
+    lemma_unfold_is_transitive not_equal_to;
+    assert (p ==> c)
   in
   move_requires lemma_not_equal_to_is_not_transitive' ();
   assert (~(is_transitive (to_complement equal_to)))
 
-//--- irreflexivity (1) and transitivity (2) together imply asymmetry (3) ---
-(* Reference: https://en.wikipedia.org/wiki/Weak_ordering#Total_preorders *)
+//--- symmetric ---
+let is_symmetric_at #a_t (binrel:binrel_t a_t) (x y:a_t) : prop =
+  (binrel x y) ==> (binrel y x)
 
-let is_irreflexive #a_t (binrel: binrel_t a_t) : prop =
-  forall x. ~(binrel x x)
+let is_symmetric #a_t (binrel:binrel_t a_t) : prop =
+  forall x y. is_symmetric_at binrel x y
+
+let lemma_unfold_is_symmetric #a_t (binrel:binrel_t a_t) 
+  : Lemma (norm [delta_only [`%is_symmetric; `%is_symmetric_at]] (is_symmetric binrel) == (is_symmetric binrel)) = 
+  norm_spec [delta_only [`%is_symmetric; `%is_symmetric_at]] (is_symmetric binrel)
+//---|
+
+//--- antisymmetric ---
+let is_antisymmetric_at #a_t (binrel:binrel_t a_t) (x y:a_t) : prop =
+  ((binrel x y) /\ (binrel y x)) ==> (x == y)
+
+let is_antisymmetric #a_t (binrel:binrel_t a_t) : prop =
+  forall x y. is_antisymmetric_at binrel x y
+
+let lemma_unfold_is_antisymmetric #a_t (binrel:binrel_t a_t) 
+  : Lemma (norm [delta_only [`%is_antisymmetric; `%is_antisymmetric_at]] (is_antisymmetric binrel) == (is_antisymmetric binrel)) = 
+  norm_spec [delta_only [`%is_antisymmetric; `%is_antisymmetric_at]] (is_antisymmetric binrel)
+//---|
+
+//--- reflexive ---
+let is_reflexive_at #a_t (binrel:binrel_t a_t) (x: a_t) : prop = binrel x x
+
+let is_reflexive #a_t (binrel:binrel_t a_t) : prop = 
+  forall x. is_reflexive_at binrel x
+
+let lemma_unfold_is_reflexive #a_t (binrel:binrel_t a_t) 
+  : Lemma (norm [delta_only [`%is_reflexive; `%is_reflexive_at]] 
+                (is_reflexive binrel) == (is_reflexive binrel)) = 
+  norm_spec [delta_only [`%is_reflexive; `%is_reflexive_at]] (is_reflexive binrel)
+//---|
+
+//--- irreflexive ---
+let is_irreflexive_at #a_t (binrel:binrel_t a_t) (x: a_t) : prop = ~(binrel x x)
+
+let is_irreflexive #a_t (binrel:binrel_t a_t) : prop = 
+  forall x. is_irreflexive_at binrel x
+
+let lemma_unfold_is_irreflexive #a_t (binrel:binrel_t a_t) 
+  : Lemma (norm [delta_only [`%is_irreflexive; `%is_irreflexive_at]] 
+                (is_irreflexive binrel) == (is_irreflexive binrel)) = 
+  norm_spec [delta_only [`%is_irreflexive; `%is_irreflexive_at]] (is_irreflexive binrel)
+//---|
+
+//--- asymmetric ---
+let is_asymmetric_at #a_t (binrel: binrel_t a_t) (x y:a_t) : prop =
+  (binrel x y) ==> ~(binrel y x)
 
 let is_asymmetric #a_t (binrel: binrel_t a_t) : prop =
-  forall x y. (binrel x y) ==> ~(binrel y x)
+  forall x y. is_asymmetric_at binrel x y
+
+let lemma_unfold_is_asymmetric #a_t (binrel:binrel_t a_t) 
+  : Lemma (norm [delta_only [`%is_asymmetric; `%is_asymmetric_at]] 
+                (is_asymmetric binrel) == (is_asymmetric binrel)) = 
+  norm_spec [delta_only [`%is_asymmetric; `%is_asymmetric_at]] (is_asymmetric binrel)
+//---|
+
+
+//--- irreflexivity (1) and transitivity (2) together imply asymmetry (3) ---
+(* Reference: https://en.wikipedia.org/wiki/Weak_ordering#Total_preorders *)
 
 let lemma_transitivity_irreflexivity_imply_asymmetry #a_t (binrel: binrel_t a_t)
   : Lemma (requires is_transitive binrel /\ is_irreflexive binrel)
@@ -118,7 +165,7 @@ let lemma_transitivity_irreflexivity_imply_asymmetry #a_t (binrel: binrel_t a_t)
         let open FStar.Calc in
         calc (==>) {
           is_transitive binrel;
-          ==> { admit () }
+          ==> { lemma_unfold_is_transitive binrel }
           (binrel x y) /\ (binrel y x) ==> (binrel x x);
           ==> { give_witness_from_squash #((binrel x y) /\ (binrel y x)) () }
           (binrel x x);
@@ -141,7 +188,7 @@ let lemma_asymmetry_imply_irreflexivity #a_t (binrel: binrel_t a_t)
     let open FStar.Calc in
     calc (==>) {
       is_asymmetric binrel;
-      ==> {}
+      ==> { lemma_unfold_is_asymmetric binrel }
       (binrel x x) ==> ~(binrel x x);
       ==> { give_witness_from_squash #(binrel x x) () }
       ~(binrel x x);
