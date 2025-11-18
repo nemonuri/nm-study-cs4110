@@ -129,6 +129,24 @@ let lemma_is_total #a_t (binrel:binrel_t a_t)
   FStar.Classical.forall_intro_2 (lemma_is_total_at binrel)
 //---|
 
+//--- right euclidean ---
+let is_right_euclidean_at #a_t (binrel:binrel_t a_t) (x:a_t) (y:a_t) (z:a_t) : bool =
+  (not ((binrel x y) && (binrel x z))) || (binrel y z)
+
+let lemma_is_right_euclidean_at #a_t (binrel:binrel_t a_t) (x:a_t) (y:a_t) (z:a_t)
+  : Lemma ((is_right_euclidean_at binrel x y z) <==> (Un.is_right_euclidean_at (to_undecidable binrel) x y z))
+  = ()
+
+let is_right_euclidean #a_t (binrel:binrel_t a_t) : prop =
+  forall x y z. is_right_euclidean_at binrel x y z
+
+let lemma_is_right_euclidean #a_t (binrel:binrel_t a_t)
+  : Lemma ((is_right_euclidean binrel) <==> (Un.is_right_euclidean (to_undecidable binrel)))
+  = 
+  let open FStar.Classical in
+  forall_intro_3 (lemma_is_right_euclidean_at binrel)
+//---|
+
 let lemma_transitivity_irreflexivity_imply_asymmetry #a_t (binrel: binrel_t a_t)
   : Lemma (requires is_transitive binrel /\ is_irreflexive binrel)
           (ensures is_asymmetric binrel)
@@ -145,3 +163,10 @@ let lemma_asymmetry_imply_irreflexivity #a_t (binrel: binrel_t a_t)
   lemma_is_asymmetric binrel;
   Un.lemma_asymmetry_imply_irreflexivity (to_undecidable binrel);
   lemma_is_irreflexive binrel
+
+let lemma_symmetric_and_transitive_is_right_euclidean_at
+  #a_t (binrel: binrel_t a_t) (x y z:a_t)
+  : Lemma (requires (is_symmetric_at binrel x y) /\
+                    (is_transitive_at binrel x y z) /\ (is_transitive_at binrel y x z))
+          (ensures is_right_euclidean_at binrel x y z)
+  = ()

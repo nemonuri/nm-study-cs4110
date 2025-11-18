@@ -149,7 +149,7 @@ let lemma_unfold_is_asymmetric #a_t (binrel:binrel_t a_t)
   norm_spec [delta_only [`%is_asymmetric; `%is_asymmetric_at]] (is_asymmetric binrel)
 //---|
 
-//--- total ---
+//--- total (semi-connex) ---
 let is_total_at #a_t (binrel: binrel_t a_t) (x y:a_t) : prop =
   (x =!= y) ==> ((binrel x y) \/ (binrel y x))
 
@@ -160,6 +160,29 @@ let lemma_unfold_is_total #a_t (binrel:binrel_t a_t)
   : Lemma (norm [delta_only [`%is_total; `%is_total_at]] 
                 (is_total binrel) == (is_total binrel)) = 
   norm_spec [delta_only [`%is_total; `%is_total_at]] (is_total binrel)
+//---|
+
+//--- definitions from 'Simple Laws about Nonprominent Properties of Binary Relations' ---
+(* Reference: 
+   - Jochen Burghardt (Nov 2018). Simple Laws about Nonprominent Properties of Binary Relations. arXiv:1806.05036. Defnition 1. p.8
+
+   Link: 
+   - https://arxiv.org/abs/1806.05036 *)
+
+//--- right euclidean ---
+let is_right_euclidean_at #a_t (binrel: binrel_t a_t) (x y z:a_t) : prop =
+  ((binrel x y) /\ (binrel x z)) ==> (binrel y z)
+
+let is_right_euclidean #a_t (binrel: binrel_t a_t) : prop =
+  forall x y z. is_right_euclidean_at binrel x y z
+
+let lemma_unfold_is_right_euclidean #a_t (binrel:binrel_t a_t) 
+  : Lemma (norm [delta_only [`%is_right_euclidean; `%is_right_euclidean_at]] 
+                (is_right_euclidean binrel) == (is_right_euclidean binrel)) = 
+  norm_spec [delta_only [`%is_right_euclidean; `%is_right_euclidean_at]] (is_right_euclidean binrel)
+//---|
+
+
 //---|
 
 //--- irreflexivity (1) and transitivity (2) together imply asymmetry (3) ---
@@ -212,3 +235,10 @@ let lemma_asymmetry_imply_irreflexivity #a_t (binrel: binrel_t a_t)
   in
   lemma_aux' |> move_requires |> forall_intro
 //---|
+
+let lemma_symmetric_and_transitive_is_right_euclidean_at
+  #a_t (binrel: binrel_t a_t) (x y z:a_t)
+  : Lemma (requires (is_symmetric_at binrel x y) /\
+                    (is_transitive_at binrel x y z) /\ (is_transitive_at binrel y x z))
+          (ensures is_right_euclidean_at binrel x y z)
+  = ()
