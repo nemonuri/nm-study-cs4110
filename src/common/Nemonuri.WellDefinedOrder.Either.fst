@@ -85,10 +85,14 @@ let lemma_to_either_comparer
     let pl: prop = is_lt_incomparable_at comparer x y in
     let pr: prop = is_equal x y in
     let lemma_l_to_r' () : Lemma (requires pl) (ensures pr) =
-      admit ()
+      match (x, y) with
+      | (Inl xv, Inl yv) -> (assert (is_lt_incomparable_eq_at wdo_l.comparer xv yv); assert (to_is_equal wdo_l.comparer xv yv))
+      | (Inr xv, Inr yv) -> (assert (is_lt_incomparable_eq_at wdo_g.comparer xv yv); assert (to_is_equal wdo_g.comparer xv yv))
     in
     let lemma_r_to_l' () : Lemma (requires pr) (ensures pl) =
-      admit ()
+      match (x, y) with
+      | (Inl xv, Inl yv) -> assert (to_is_equal wdo_l.comparer xv yv)
+      | (Inr xv, Inr yv) -> assert (to_is_equal wdo_g.comparer xv yv)
     in
     move_requires lemma_l_to_r' ();
     move_requires lemma_r_to_l' ()
